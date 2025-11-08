@@ -10,11 +10,12 @@ This backend is designed to serve as the core of an event management application
 
 ## Features
 
-- **Student Registration & Profile Management:** Create and update student profiles securely.
+- **Student Registration & Profile Management:** Create student profiles securely.
+- **Serach Engine:** Students can search for events.
 - **Department & Sponsor APIs:** Fetch available departments and sponsors.
 - **Event Management:** Create, list, and manage events; supports association with departments and sponsors.
 - **Event Registration:** Students can register for events and view/cancel their registrations.
-- **Organizer Dashboard:** Organizers can log in, manage their events, and view sponsor details.
+- **Organizer Dashboard:** Organizers can log in, manage their events, view and update sponsor details.
 - **Supabase Authentication:** Integration with Supabase for secure user authentication.
 - **Robust MySQL Integration:** Utilizes `flask_mysqldb` for powerful data operations.
 
@@ -23,8 +24,8 @@ This backend is designed to serve as the core of an event management application
 <img width="1847" height="891" alt="Screenshot 2025-11-03 164731" src="https://github.com/user-attachments/assets/3b089012-add2-40e3-8329-d9a9912666f3" />
 <img width="1850" height="601" alt="Screenshot 2025-11-04 191042" src="https://github.com/user-attachments/assets/6a9b479d-ce9c-483d-ad5c-6135991106b8" />
 <img width="1874" height="915" alt="Screenshot 2025-11-04 191104" src="https://github.com/user-attachments/assets/60ebe9cf-f683-454d-b6d7-290efca861d0" />
-<img width="1875" height="757" alt="Screenshot 2025-11-04 214425" src="https://github.com/user-attachments/assets/50f9640b-64b4-43fb-9bd6-93d7aa935ca1" />
-
+<img width="1873" height="768" alt="Screenshot 2025-11-08 144849" src="https://github.com/user-attachments/assets/886164d0-68af-442b-b0b1-68af6ef79a08" />
+<img width="1865" height="894" alt="Screenshot 2025-11-08 145139" src="https://github.com/user-attachments/assets/531b7498-a0a7-4bb9-9ea9-5f4303147cab" />
 
 ## Technologies Used
 
