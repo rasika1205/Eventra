@@ -307,6 +307,53 @@ def create_event():
 
     return jsonify({"message": "Event created successfully!"}), 201
 
+@app.route("/api/events/<int:event_id>", methods=["PUT"])
+def update_event(event_id):
+    data = request.json
+    cur = mysql.connection.cursor()
+    
+    cur.execute("""
+        UPDATE Event
+        SET Event_Name=%s, Description=%s, Date=%s, Time=%s, Venue=%s,
+            Sponsor_ID=%s, Max_Participants=%s, Registration_Fee=%s, Event_Type=%s
+        WHERE Event_ID=%s
+    """, (
+        data.get("name"),
+        data.get("description"),
+        data.get("date"),
+        data.get("time"),
+        data.get("venue"),
+        data.get("sponsor_id"),
+        data.get("max_participants"),
+        data.get("fee"),
+        data.get("type"),
+        event_id
+    ))
+
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({"message": "Event updated successfully!"}), 200
+
+@app.route("/api/events/search", methods=["GET"])
+def search_events():
+    query = request.args.get("q", "")
+    cur = mysql.connection.cursor(DictCursor)
+
+    cur.execute("""
+        SELECT e.*, d.Dept_Name, s.Name AS Sponsor_Name
+        FROM Event e
+        JOIN Department d ON e.Department_ID = d.Department_ID
+        LEFT JOIN Sponsor s ON e.Sponsor_ID = s.Sponsor_ID
+        WHERE e.Event_Name LIKE %s
+        ORDER BY e.Date ASC
+    """, (f"%{query}%",))
+
+    events = cur.fetchall()
+    cur.close()
+
+    return jsonify(events)
+
+
 
 @app.route("/api/organizer/<int:organizer_id>", methods=["GET"])
 def get_organizer_dashboard(organizer_id):

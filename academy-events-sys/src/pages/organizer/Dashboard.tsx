@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, Plus, Calendar, Users, DollarSign } from "lucide-react";
+import { LogOut, Plus, Calendar, Users, DollarSign, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { User, Session } from "@supabase/supabase-js";
 
@@ -24,6 +24,8 @@ const OrganizerDashboard = () => {
   const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any>(null);
 
   const [eventName, setEventName] = useState("");
   const [description, setDescription] = useState("");
@@ -71,6 +73,7 @@ const OrganizerDashboard = () => {
     }
   };
   console.log(sponsors)
+
   const handleCreateEvent = async (e: React.FormEvent) => {
   e.preventDefault();
 
@@ -79,7 +82,6 @@ const OrganizerDashboard = () => {
   try {
     const { data } = await supabase.auth.getSession();
     const token = data?.session?.access_token;
-    console.log("Creating event with token:", token);
     const response = await fetch("http://localhost:8000/api/organizer/event", {
       method: "POST",
       headers: {
@@ -126,6 +128,71 @@ const OrganizerDashboard = () => {
   }
 };
 
+  const handleUpdateEvent = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!editingEvent) return;
+  console.log("Updating Event ID:", editingEvent.event_id);
+  try {
+    const response = await fetch(`http://localhost:8000/api/events/${editingEvent.Event_ID}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: eventName,
+        description,
+        date,
+        time,
+        venue,
+        sponsor_id: sponsorId || null,
+        max_participants: parseInt(maxParticipants),
+        fee: parseFloat(registrationFee),
+        type: eventType,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Failed to update event");
+
+    toast.success("Event updated successfully!");
+    setIsEditDialogOpen(false);
+    setEditingEvent(null);
+
+    // Reset form
+    setEventName("");
+    setDescription("");
+    setDate("");
+    setTime("");
+    setVenue("");
+    setMaxParticipants("");
+    setRegistrationFee("");
+    setEventType("");
+    setSponsorId("");
+
+    // Reload events
+    if (organizer?.Organizer_ID) {
+      await loadOrganizerData(organizer.Organizer_ID);
+    }
+  } catch (error: any) {
+    toast.error(error.message || "Failed to update event");
+  }
+};
+
+
+  const openEditDialog = (event: any) => {
+    setEditingEvent(event);
+    setEventName(event.event_name);
+    setDescription(event.description || "");
+    setDate(event.date);
+    setTime(event.time);
+    setVenue(event.venue);
+    setMaxParticipants(event.max_participants?.toString() || "");
+    setRegistrationFee(event.registration_fee?.toString() || "");
+    setEventType(event.event_type || "");
+    setSponsorId(event.sponsor_id || "");
+    setIsEditDialogOpen(true);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -329,11 +396,22 @@ const OrganizerDashboard = () => {
           {events.map((event) => (
             <Card key={event.event_id} className="p-6 bg-card border-border hover:border-primary transition-all">
               <h3 className="text-xl font-semibold mb-2 text-foreground">{event.Event_Name}</h3>
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-xl font-semibold text-foreground">{event.event_name}</h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => openEditDialog(event)}
+                  className="h-8 w-8"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
               <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{event.Description}</p>
               <div className="space-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
-                  <span>{new Date(event.date).toLocaleDateString()} at {event.Time}</span>
+                  <span>{new Date(event.Date).toLocaleDateString()} at {event.Time}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-accent" />
@@ -352,6 +430,129 @@ const OrganizerDashboard = () => {
             </Card>
           ))}
         </div>
+        {/* Edit Event Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Update Event</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdateEvent} className="space-y-4">
+              <div>
+                <Label htmlFor="edit-event-name">Event Name</Label>
+                <Input
+                  id="edit-event-name"
+                  value={eventName}
+                  onChange={(e) => setEventName(e.target.value)}
+                  required
+                  className="bg-input border-border"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="bg-input border-border"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-date">Date</Label>
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    required
+                    className="bg-input border-border"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-time">Time</Label>
+                  <Input
+                    id="edit-time"
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    required
+                    className="bg-input border-border"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-venue">Venue</Label>
+                <Input
+                  id="edit-venue"
+                  value={venue}
+                  onChange={(e) => setVenue(e.target.value)}
+                  required
+                  className="bg-input border-border"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-max-participants">Max Participants</Label>
+                  <Input
+                    id="edit-max-participants"
+                    type="number"
+                    value={maxParticipants}
+                    onChange={(e) => setMaxParticipants(e.target.value)}
+                    required
+                    className="bg-input border-border"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-registration-fee">Registration Fee</Label>
+                  <Input
+                    id="edit-registration-fee"
+                    type="number"
+                    step="0.01"
+                    value={registrationFee}
+                    onChange={(e) => setRegistrationFee(e.target.value)}
+                    required
+                    className="bg-input border-border"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-event-type">Event Type</Label>
+                <Select value={eventType} onValueChange={setEventType}>
+                  <SelectTrigger className="bg-input border-border">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Workshop">Workshop</SelectItem>
+                    <SelectItem value="Seminar">Seminar</SelectItem>
+                    <SelectItem value="Competition">Competition</SelectItem>
+                    <SelectItem value="Cultural">Cultural</SelectItem>
+                    <SelectItem value="Sports">Sports</SelectItem>
+                    <SelectItem value="Technical">Technical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-sponsor">Sponsor (Optional)</Label>
+                <Select value={sponsorId} onValueChange={setSponsorId}>
+                  <SelectTrigger className="bg-input border-border">
+                    <SelectValue placeholder="Select sponsor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sponsors.map((sponsor) => (
+                      <SelectItem key={sponsor.sponsor_id} value={sponsor.sponsor_id}>
+                        {sponsor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" className="w-full">
+                Update Event
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
