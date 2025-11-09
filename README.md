@@ -163,6 +163,13 @@ However, you may **not copy, modify, redistribute, or claim this project as your
 
 ---
 
+## Team Members
+- **Rasika Gautam:** 2024UCM2694
+- **Pulkit Gupta:** 2024UCM4018
+- **Soham Mawai:** 2024UCM6056
+
+---
+
 ## 🧑‍💻 Author
 
 **Rasika Gautam**
